@@ -162,6 +162,19 @@ Entries marked **[spec]** propose a change to the spec.
 - **Observed** (2026.09). `uuid('3F2504E0-…')` returns a value of type `UUID` (`randomUUID()` still returns a `STRING`). It can be stored as a property, also in lists (`LIST<UUID NOT NULL>`). The embedded API returns `java.util.UUID`, and arrays of it for lists.
 - **Choice.** `"<uuid>"^^lpg:uuid` with `UUID.toString()` as lexical form, which is the lower-case 8-4-4-4-12 form of SPEC v0.3 §6. Conformance case 07 checks a single value and a list.
 
+## Modules
+
+### D25. `rdf-snapshot-neo4j`: the Neo4j side without procedures
+
+- **Context.** n20s, an in-memory reasoning plugin, needs the Neo4j-side code (scope collection, element conversion, orchestration) to project snapshots into Jena through its own `QuadSink`. That code lived in `rdf-snapshot-procedures`, whose jar carries `ExportProcedure`: embedding it in another plugin would register `rdfsnapshot.export` twice when both are installed.
+- **Choice.** A module between core and procedures, with Neo4j as a `provided` dependency and no `@Procedure`, `@UserFunction` or `@Context` class. It holds `Scope`, `Neo4jAdapter`, `SnapshotRules` (base and snapshot ID validation, default snapshot ID, export instant: D2, D14, D17) and `Snapshotter`:
+  - `Snapshotter.steps(tx, database, scopeQuery, base, snapshotId, generatedAt, sink)` runs the scope query and returns the lazy steps of D19;
+  - `Snapshotter.write(...)`, same arguments, runs them all.
+
+  `rdfsnapshot.export` iterates `steps` into its chunks, so its streaming is unchanged. `generatedAt` is truncated to the second inside `Snapshotter`, whoever calls it.
+- **Why.** One code path for the procedure and for embedders; the module can be shaded into any plugin. Embedders should relocate the `io.github.halftermeyer.rdfsnapshot` packages when shading: with both plugins installed, two unrelocated copies of these classes would sit on the same server classpath (`plugins/*`, D18), and a version mismatch between them would surface as linkage errors.
+- **Distribution.** `jitpack.yml` builds with JDK 21 and `mvn install -DskipTests` (the conformance suite needs Docker). Coordinates: `com.github.halftermeyer.neo4j-rdf-snapshot:rdf-snapshot-neo4j:<tag>`, repository `https://jitpack.io`.
+
 ## Conformance suite
 
 ### D22. Comparing outputs with element IDs and timestamps

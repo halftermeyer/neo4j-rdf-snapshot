@@ -1,0 +1,5 @@
+# The conformance suite needs Docker, which JitPack does not provide: build and install without tests.
+jdk:
+  - openjdk21
+install:
+  - mvn -B install -DskipTests

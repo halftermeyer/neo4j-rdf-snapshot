@@ -1,4 +1,4 @@
-package io.github.halftermeyer.rdfsnapshot.procedure;
+package io.github.halftermeyer.rdfsnapshot.neo4j;
 
 import java.util.Map;
 import java.util.SortedSet;

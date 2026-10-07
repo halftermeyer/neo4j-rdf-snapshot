@@ -10,14 +10,14 @@
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>rdf-snapshot-procedures</artifactId>
-    <name>rdf-snapshot-procedures</name>
-    <description>Neo4j procedure rdfsnapshot.export, built on rdf-snapshot-core</description>
+    <artifactId>rdf-snapshot-neo4j</artifactId>
+    <name>rdf-snapshot-neo4j</name>
+    <description>Writes a snapshot of a Neo4j transaction to any QuadSink. No procedure classes: safe to embed in other plugins.</description>
 
     <dependencies>
         <dependency>
             <groupId>io.github.halftermeyer</groupId>
-            <artifactId>rdf-snapshot-neo4j</artifactId>
+            <artifactId>rdf-snapshot-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -32,25 +32,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <!-- the plugin jar embeds the core, so only one jar goes into plugins/ -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

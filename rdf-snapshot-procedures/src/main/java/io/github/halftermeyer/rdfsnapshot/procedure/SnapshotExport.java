@@ -1,15 +1,13 @@
 package io.github.halftermeyer.rdfsnapshot.procedure;
 
 import io.github.halftermeyer.rdfsnapshot.IriMinter;
-import io.github.halftermeyer.rdfsnapshot.SnapshotSerializer;
-import io.github.halftermeyer.rdfsnapshot.Vocabulary;
-import io.github.halftermeyer.rdfsnapshot.model.SnapshotMetadata;
+import io.github.halftermeyer.rdfsnapshot.neo4j.SnapshotRules;
+import io.github.halftermeyer.rdfsnapshot.neo4j.Snapshotter;
 import io.github.halftermeyer.rdfsnapshot.sink.NQuadsSink;
 import io.github.halftermeyer.rdfsnapshot.sink.QuadSink;
 import io.github.halftermeyer.rdfsnapshot.sink.TriGSink;
-import io.github.halftermeyer.rdfsnapshot.term.Iri;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -28,46 +26,21 @@ public final class SnapshotExport {
      * the snapshot is one consistent read; the stream must be consumed before the transaction ends.
      */
     public static Stream<Chunk> run(Transaction tx, String database, String scopeQuery, Map<String, Object> config) {
-        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        Instant now = SnapshotRules.exportInstant();
         ExportConfig cfg = ExportConfig.parse(config, now);
-        if (scopeQuery == null || scopeQuery.isBlank()) {
-            throw new IllegalArgumentException("scopeQuery must not be empty");
-        }
+        SnapshotRules.requireScopeQuery(scopeQuery);
 
-        Scope scope = Scope.collect(tx, scopeQuery);
-
-        IriMinter iris = new IriMinter(cfg.base());
         StringBuilder buffer = new StringBuilder(CHUNK_SIZE * 2);
         QuadSink sink = switch (cfg.format()) {
             case NQUADS -> new NQuadsSink(buffer);
-            case TRIG -> new TriGSink(buffer, iris);
+            case TRIG -> new TriGSink(buffer, new IriMinter(cfg.base()));
         };
-        SnapshotSerializer serializer = new SnapshotSerializer(iris, sink);
-        SnapshotMetadata metadata = new SnapshotMetadata(cfg.snapshotId(), database, scopeQuery, now);
-        Iri graph = iris.snapshot(cfg.snapshotId());
+        Iterator<Runnable> steps = Snapshotter
+                .steps(tx, database, scopeQuery, cfg.base(), cfg.snapshotId(), now, sink)
+                .iterator();
 
-        Stream<Runnable> steps = Stream.of(
-                        Stream.<Runnable>of(
-                                () -> serializer.writeMetadata(metadata),
-                                () -> serializer.writeVocabulary(graph, vocabulary(tx, scope))),
-                        scope.nodeIds.stream().<Runnable>map(id -> () ->
-                                serializer.writeNode(graph, Neo4jAdapter.node(tx.getNodeByElementId(id)))),
-                        scope.relationshipIds.stream().<Runnable>map(id -> () ->
-                                serializer.writeRelationship(graph,
-                                        Neo4jAdapter.relationship(tx.getRelationshipByElementId(id)))),
-                        Stream.<Runnable>of(sink::close))
-                .flatMap(s -> s);
-
-        ChunkIterator chunks = new ChunkIterator(buffer, steps.iterator(), CHUNK_SIZE);
+        ChunkIterator chunks = new ChunkIterator(buffer, steps, CHUNK_SIZE);
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(chunks, Spliterator.ORDERED), false)
                 .map(Chunk::new);
-    }
-
-    private static Vocabulary vocabulary(Transaction tx, Scope scope) {
-        Vocabulary vocabulary = new Vocabulary();
-        scope.nodeIds.forEach(id -> vocabulary.addNode(Neo4jAdapter.node(tx.getNodeByElementId(id))));
-        scope.relationshipIds.forEach(id ->
-                vocabulary.addRelationship(Neo4jAdapter.relationship(tx.getRelationshipByElementId(id))));
-        return vocabulary;
     }
 }

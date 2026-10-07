@@ -11,8 +11,30 @@ IRIs identify database records, not real-world entities: `e:4:…:12` is "node 1
 ## Modules
 
 - `rdf-snapshot-core`: the serializer. Pure Java 21, no runtime dependencies. It writes to a `QuadSink`; N-Quads and TriG sinks are included, and other sinks (e.g. a Jena dataset) plug in the same way.
-- `rdf-snapshot-procedures`: the Neo4j procedure `rdfsnapshot.export`.
+- `rdf-snapshot-neo4j`: the Neo4j side, with no procedure class, for embedding in other plugins. `Snapshotter.write(tx, database, scopeQuery, base, snapshotId, generatedAt, sink)` writes the snapshot of a transaction to any `QuadSink`; `SnapshotRules` holds the input rules and defaults.
+- `rdf-snapshot-procedures`: the Neo4j procedure `rdfsnapshot.export`, built on `rdf-snapshot-neo4j`.
 - `rdf-snapshot-conformance`: the [conformance suite](rdf-snapshot-conformance/README.md).
+
+### Using the library from another project
+
+Through [JitPack](https://jitpack.io), from a tag or commit:
+
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+
+<dependency>
+    <groupId>com.github.halftermeyer.neo4j-rdf-snapshot</groupId>
+    <artifactId>rdf-snapshot-neo4j</artifactId>
+    <version>TAG</version>
+</dependency>
+```
+
+Neo4j itself is a `provided` dependency. When shading into a plugin, relocate `io.github.halftermeyer.rdfsnapshot` (DECISIONS D25).
 
 ## Quickstart
 

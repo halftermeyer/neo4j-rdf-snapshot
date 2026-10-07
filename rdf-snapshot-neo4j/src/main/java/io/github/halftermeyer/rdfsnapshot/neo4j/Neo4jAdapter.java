@@ -1,4 +1,4 @@
-package io.github.halftermeyer.rdfsnapshot.procedure;
+package io.github.halftermeyer.rdfsnapshot.neo4j;
 
 import io.github.halftermeyer.rdfsnapshot.model.LpgDuration;
 import io.github.halftermeyer.rdfsnapshot.model.LpgNode;
