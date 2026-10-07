@@ -47,7 +47,7 @@ public final class SnapshotExport {
 
         Stream<Runnable> steps = Stream.of(
                         Stream.<Runnable>of(
-                                () -> serializer.writeMetadata(metadata, false),
+                                () -> serializer.writeMetadata(metadata),
                                 () -> serializer.writeVocabulary(graph, vocabulary(tx, scope))),
                         scope.nodeIds.stream().<Runnable>map(id -> () ->
                                 serializer.writeNode(graph, Neo4jAdapter.node(tx.getNodeByElementId(id)))),

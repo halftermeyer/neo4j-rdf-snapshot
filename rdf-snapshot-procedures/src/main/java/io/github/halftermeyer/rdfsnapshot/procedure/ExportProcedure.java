@@ -28,7 +28,7 @@ public class ExportProcedure {
     @Procedure(name = "rdfsnapshot.export", mode = Mode.READ)
     @Description("Exports the subgraph returned by scopeQuery as an RDF snapshot. "
             + "config: base (required), format ('nquads' | 'trig', default 'trig'), "
-            + "snapshotId (default: UTC timestamp yyyyMMdd'T'HHmmss'Z'), includeSchema (default true).")
+            + "snapshotId (default: UTC timestamp yyyyMMdd'T'HHmmss'Z').")
     public Stream<Chunk> export(
             @Name("scopeQuery") String scopeQuery,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {

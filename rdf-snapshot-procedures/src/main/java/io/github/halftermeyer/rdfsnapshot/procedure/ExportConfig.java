@@ -7,14 +7,14 @@ import java.util.Map;
 import java.util.Set;
 
 /** The {@code config} map of {@code rdfsnapshot.export}. */
-public record ExportConfig(String base, Format format, String snapshotId, boolean includeSchema) {
+public record ExportConfig(String base, Format format, String snapshotId) {
 
     public enum Format {
         NQUADS,
         TRIG
     }
 
-    private static final Set<String> KEYS = Set.of("base", "format", "snapshotId", "includeSchema");
+    private static final Set<String> KEYS = Set.of("base", "format", "snapshotId");
     static final DateTimeFormatter SNAPSHOT_ID = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC);
 
     /** @param now the start of the export, used for the default snapshot ID */
@@ -39,10 +39,6 @@ public record ExportConfig(String base, Format format, String snapshotId, boolea
         if (!(snapshotId instanceof String id) || id.isEmpty()) {
             throw new IllegalArgumentException("config.snapshotId must be a non-empty string");
         }
-        Object includeSchema = map.getOrDefault("includeSchema", true);
-        if (!(includeSchema instanceof Boolean schema)) {
-            throw new IllegalArgumentException("config.includeSchema must be a boolean");
-        }
-        return new ExportConfig(b, f, id, schema);
+        return new ExportConfig(b, f, id);
     }
 }

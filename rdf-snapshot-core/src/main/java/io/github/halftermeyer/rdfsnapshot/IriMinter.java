@@ -63,10 +63,6 @@ public final class IriMinter {
         return new Iri(snapshotNamespace() + encodeSegment(snapshotId));
     }
 
-    public Iri schemaGraph(String snapshotId) {
-        return new Iri(snapshotNamespace() + encodeSegment(snapshotId) + "/schema");
-    }
-
     /**
      * Percent-encodes a string as one RFC 3986 path segment (SPEC §5): UTF-8 bytes, every byte
      * outside the unreserved set ({@code A-Z a-z 0-9 - . _ ~}) and {@code :} becomes {@code %XX}

@@ -40,7 +40,7 @@ public final class SnapshotSerializer {
     }
 
     /**
-     * Writes a whole snapshot without schema graph, then closes the sink. Nodes and
+     * Writes a whole snapshot, then closes the sink. Nodes and
      * relationships are deduplicated and sorted by element ID.
      */
     public void write(SnapshotMetadata metadata, Collection<LpgNode> nodes, Collection<LpgRelationship> rels) {
@@ -52,7 +52,7 @@ public final class SnapshotSerializer {
         sortedRels.forEach(vocabulary::addRelationship);
 
         Iri graph = iris.snapshot(metadata.snapshotId());
-        writeMetadata(metadata, false);
+        writeMetadata(metadata);
         writeVocabulary(graph, vocabulary);
         sortedNodes.forEach(n -> writeNode(graph, n));
         sortedRels.forEach(r -> writeRelationship(graph, r));
@@ -60,14 +60,11 @@ public final class SnapshotSerializer {
     }
 
     /** Snapshot metadata, in the default graph. */
-    public void writeMetadata(SnapshotMetadata metadata, boolean hasSchemaGraph) {
+    public void writeMetadata(SnapshotMetadata metadata) {
         Iri snapshot = iris.snapshot(metadata.snapshotId());
         emit(snapshot, Vocab.RDF_TYPE, Vocab.LPG_SNAPSHOT, null);
         emit(snapshot, Vocab.LPG_DATABASE, Literal.string(metadata.database()), null);
         emit(snapshot, Vocab.LPG_SCOPE, Literal.string(metadata.scope()), null);
-        if (hasSchemaGraph) {
-            emit(snapshot, Vocab.LPG_SCHEMA_GRAPH, iris.schemaGraph(metadata.snapshotId()), null);
-        }
         LocalDateTime utc = LocalDateTime.ofInstant(metadata.generatedAt(), ZoneOffset.UTC);
         emit(snapshot, Vocab.PROV_GENERATED_AT_TIME,
                 new Literal(ValueMapper.dateTime(utc) + "Z", Vocab.XSD_DATE_TIME), null);

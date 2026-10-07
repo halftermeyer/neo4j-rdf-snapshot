@@ -15,8 +15,6 @@ class IriMinterTest {
         assertEquals("http://acme.org/plm/type/USES", iris.type("USES").value());
         assertEquals("http://acme.org/plm/prop/partNumber", iris.propertyKey("partNumber").value());
         assertEquals("http://acme.org/plm/snapshot/20261005T140311Z", iris.snapshot("20261005T140311Z").value());
-        assertEquals("http://acme.org/plm/snapshot/20261005T140311Z/schema",
-                iris.schemaGraph("20261005T140311Z").value());
     }
 
     @Test
