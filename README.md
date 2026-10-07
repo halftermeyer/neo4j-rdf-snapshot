@@ -30,11 +30,19 @@ Through [JitPack](https://jitpack.io), from a tag or commit:
 <dependency>
     <groupId>com.github.halftermeyer.neo4j-rdf-snapshot</groupId>
     <artifactId>rdf-snapshot-neo4j</artifactId>
-    <version>TAG</version>
+    <version>v0.1.0</version>   <!-- a tag or commit -->
 </dependency>
 ```
 
 Neo4j itself is a `provided` dependency. When shading into a plugin, relocate `io.github.halftermeyer.rdfsnapshot` (DECISIONS D25).
+
+## Compatibility
+
+| Library | SPEC | Neo4j | Java |
+| --- | --- | --- | --- |
+| 0.1.0 | v0.3 | 2026.09+ Enterprise | 21 |
+
+Releases are tagged `vX.Y.Z`; the release procedure is in [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Quickstart
 
@@ -43,7 +51,7 @@ Requirements: Java 21, Maven, Neo4j Enterprise 2026.x. Docker is needed for the 
 ```
 mvn verify                                  # unit tests + conformance suite (Docker)
 mvn package -DskipTests                     # build only
-cp rdf-snapshot-procedures/target/rdf-snapshot-procedures-0.1.0-SNAPSHOT.jar $NEO4J_HOME/plugins/
+cp rdf-snapshot-procedures/target/rdf-snapshot-procedures-*.jar $NEO4J_HOME/plugins/
 ```
 
 Restart Neo4j, then:
