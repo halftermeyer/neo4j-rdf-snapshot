@@ -1,6 +1,6 @@
 # 03-lists
 
-List properties (SPEC §7.4).
+List properties (SPEC §7.5).
 
 Checks:
 

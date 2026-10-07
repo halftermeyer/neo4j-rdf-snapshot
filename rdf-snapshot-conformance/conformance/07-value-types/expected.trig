@@ -41,6 +41,8 @@ s:20261005T140311Z {
     p:string         a lpg:PropertyKey ; lpg:name "string" .
     p:tiny           a lpg:PropertyKey ; lpg:name "tiny" .
     p:utcDateTime    a lpg:PropertyKey ; lpg:name "utcDateTime" .
+    p:uuid           a lpg:PropertyKey ; lpg:name "uuid" .
+    p:uuids          a lpg:PropertyKey ; lpg:name "uuids" .
     p:wgs            a lpg:PropertyKey ; lpg:name "wgs" .
     p:wgs3d          a lpg:PropertyKey ; lpg:name "wgs3d" .
     p:zonedDateTime  a lpg:PropertyKey ; lpg:name "zonedDateTime" .
@@ -70,9 +72,11 @@ s:20261005T140311Z {
         p:negDuration "-PT0.5S"^^xsd:duration ;
         p:wgs "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT(2.35 48.85)"^^geo:wktLiteral ;
         p:wgs3d "<http://www.opengis.net/def/crs/OGC/0/CRS84h> POINT Z(2.35 48.85 35)"^^geo:wktLiteral ;
-        p:cartesian "POINT(1 -2.5)"^^geo:wktLiteral ;
-        p:cartesian3d "POINT Z(1 2 3)"^^geo:wktLiteral ;
+        p:cartesian "<https://example.org/lpg#Cartesian2D> POINT(1 -2.5)"^^geo:wktLiteral ;
+        p:cartesian3d "<https://example.org/lpg#Cartesian3D> POINT Z(1 2 3)"^^geo:wktLiteral ;
         p:bytes "AAEC/w=="^^xsd:base64Binary ;
+        p:uuid "3f2504e0-4f89-11d3-9a0c-0305e82c3301"^^lpg:uuid ;
+        p:uuids ( "3f2504e0-4f89-11d3-9a0c-0305e82c3301"^^lpg:uuid "00000000-0000-0000-0000-000000000000"^^lpg:uuid ) ;
         p:dates ( "2026-01-01"^^xsd:date "2026-12-31"^^xsd:date ) ;
         p:floats ( 1.0E0 2.5E0 ) .
 }

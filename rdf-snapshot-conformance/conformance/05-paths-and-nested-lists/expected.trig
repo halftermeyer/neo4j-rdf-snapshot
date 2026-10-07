@@ -13,7 +13,8 @@ s:20261005T140311Z a lpg:Snapshot ;
     lpg:scope "MATCH p = (:Step {n: 1})-[:NEXT]->{2}(:Step {n: 3}) MATCH (last:Step {n: 4}), (o:Other) RETURN p, [nodes(p), [relationships(p)[0]]] AS nested, {node: last} AS map, o.n AS number, 'text' AS string" ;
     prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
 
-# Step 4 is only inside a map, and Other only contributes a number: neither is in scope.
+# Step 4 is in scope through the map. Other only contributes a number: it is not in scope,
+# and neither is the relationship from Step 3 to Step 4, which no column returns.
 s:20261005T140311Z {
 
     l:Step a lpg:Label ;            lpg:name "Step" .
@@ -23,6 +24,7 @@ s:20261005T140311Z {
     e:s1 a lpg:Node ; lpg:label l:Step ; lpg:elementId "s1" ; p:n 1 .
     e:s2 a lpg:Node ; lpg:label l:Step ; lpg:elementId "s2" ; p:n 2 .
     e:s3 a lpg:Node ; lpg:label l:Step ; lpg:elementId "s3" ; p:n 3 .
+    e:s4 a lpg:Node ; lpg:label l:Step ; lpg:elementId "s4" ; p:n 4 .
 
     e:s1s2 a lpg:Relationship ; lpg:type t:NEXT ; lpg:elementId "s1s2" ; lpg:source e:s1 ; lpg:target e:s2 .
     e:s2s3 a lpg:Relationship ; lpg:type t:NEXT ; lpg:elementId "s2s3" ; lpg:source e:s2 ; lpg:target e:s3 .

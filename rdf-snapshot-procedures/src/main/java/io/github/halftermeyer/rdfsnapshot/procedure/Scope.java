@@ -1,5 +1,6 @@
 package io.github.halftermeyer.rdfsnapshot.procedure;
 
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.neo4j.graphdb.Node;
@@ -10,7 +11,8 @@ import org.neo4j.graphdb.Transaction;
 
 /**
  * The elements in scope (SPEC §3): every node and relationship in any column, recursively inside
- * lists and paths, plus the endpoints of every in-scope relationship. Element IDs are kept sorted.
+ * lists, map values and paths, plus the endpoints of every in-scope relationship. Element IDs are
+ * kept sorted.
  */
 public final class Scope {
     public final SortedSet<String> nodeIds = new TreeSet<>();
@@ -42,8 +44,9 @@ public final class Scope {
                 path.relationships().forEach(this::add);
             }
             case Iterable<?> list -> list.forEach(this::add);
+            case Map<?, ?> map -> map.values().forEach(this::add);
             case null, default -> {
-                // other values, maps included, are ignored (SPEC §3)
+                // other values are ignored (SPEC §3)
             }
         }
     }

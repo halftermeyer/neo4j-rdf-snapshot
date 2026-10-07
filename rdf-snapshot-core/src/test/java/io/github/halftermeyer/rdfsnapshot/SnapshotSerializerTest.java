@@ -181,6 +181,7 @@ class SnapshotSerializerTest {
         props.put("cart", new LpgPoint(LpgPoint.Crs.CARTESIAN_2D, new double[] {1, 2}));
         props.put("cart3", new LpgPoint(LpgPoint.Crs.CARTESIAN_3D, new double[] {1, 2, 3}));
         props.put("bytes", new byte[] {1, 2, 3});
+        props.put("uuid", java.util.UUID.fromString("3f2504e0-4f89-11d3-9a0c-0305e82c3301"));
         props.put("list", List.of(1L, 2L, 1L));
         props.put("dateList", List.of(LocalDate.of(2026, 1, 1)));
         props.put("empty", List.of());
@@ -191,10 +192,11 @@ class SnapshotSerializerTest {
         DatasetGraph dsg = DatasetGraphFactory.create();
         RDFParser.create().source(new StringReader(out)).lang(Lang.NQUADS).strict(true).parse(dsg);
 
-        // 4 metadata + 3 labels * 2 + 20 keys * 2 + node (type, 3 labels, elementId, 20 properties) + 4 list cells * 2
-        assertEquals(4 + 6 + 40 + 25 + 8, dsg.stream().count());
+        // 4 metadata + 3 labels * 2 + 21 keys * 2 + node (type, 3 labels, elementId, 21 properties) + 4 list cells * 2
+        assertEquals(4 + 6 + 42 + 26 + 8, dsg.stream().count());
         dsg.stream().map(q -> q.getObject()).filter(Node::isLiteral).forEach(o -> {
-            if (!o.getLiteralDatatypeURI().startsWith("http://www.opengis.net/")) {
+            String dt = o.getLiteralDatatypeURI();
+            if (!dt.startsWith("http://www.opengis.net/") && !dt.startsWith(io.github.halftermeyer.rdfsnapshot.term.Vocab.LPG)) {
                 assertTrue(o.getLiteral().isWellFormed(), "ill-formed literal: " + o);
             }
         });

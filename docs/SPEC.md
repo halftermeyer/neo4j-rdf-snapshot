@@ -1,7 +1,15 @@
 # LPG → RDF Snapshot Format
 
-**Status:** draft v0.2, 2026-10-05
-**Target:** Neo4j, Cypher 25+, Enterprise Edition
+**Status:** draft v0.3, 2026-10-07 **Target:** Neo4j, Cypher 25+, Enterprise Edition **Reference implementation:** [halftermeyer/neo4j-rdf-snapshot](https://github.com/halftermeyer/neo4j-rdf-snapshot)
+
+### Changes since v0.2
+
+- §3: maps are containers, like lists and paths (nodes and relationships inside map values are in scope).
+- §5: exact percent-encoding rule; trailing `/` of `base` ignored.
+- §6: CRS IRIs for Cartesian points; `lpg:uuid` datatype; `prov:generatedAtTime` listed.
+- §7: vocabulary terms declared only when used; points (2D/3D, WGS-84 and Cartesian), `UUID`, offsets with seconds, mixed-sign durations; canonical lexical forms; determinism.
+- §8: the schema graph is **optional**; reading the GRAPH TYPE from a read-only context.
+- §11, §12: losses and open questions updated.
 
 ## 1. Purpose
 
@@ -28,24 +36,24 @@ Design principles:
 ## 3. Inputs and scope
 
 | Input | Description |
-|---|---|
+| --- | --- |
 | `base` | Base IRI of the project, e.g. `http://acme.org/plm` |
 | `scope` | A read-only Cypher query |
 
 Scope semantics:
 
-- Every `NODE` and `RELATIONSHIP` found in any returned column is in scope, including inside `LIST` and `PATH` values. Paths are decomposed into their nodes and relationships; the path itself has no identity.
+- Every `NODE` and `RELATIONSHIP` found in any returned column is in scope, **including inside containers**: `LIST`, `MAP` (values, not keys) and `PATH`, recursively. Paths are decomposed into their nodes and relationships; the path itself has no identity.
 - All other returned values are ignored.
 - **Closure rule:** the endpoints of every in-scope relationship are added to the scope.
 - Elements are deduplicated.
-- The query and the serialization run in **a single read transaction**, so the snapshot is a consistent state of the database.
+- The query and the serialization of the data run in **a single read transaction**, so the data of a snapshot is a consistent state of the database.
 
 ## 4. Three levels
 
 The format separates three levels, as in classic meta-modelling:
 
 | Level | Namespace | Content |
-|---|---|---|
+| --- | --- | --- |
 | Meta-model | `lpg:` | What a node, a label, a relationship, a property key is. Generic, fixed. |
 | Graph vocabulary | `l:`, `t:`, `p:` | The names used by *this* graph: its labels, relationship types, property keys. What the GRAPH TYPE describes. |
 | Records | `e:` | The nodes and relationships of the snapshot. |
@@ -61,15 +69,17 @@ IRIs are used for the graph vocabulary, not literals, because:
 ## 5. Identifiers
 
 | Thing | IRI pattern |
-|---|---|
+| --- | --- |
 | Element (node or relationship) | `{base}/e/{elementId}` |
 | Label | `{base}/label/{name}` |
 | Relationship type | `{base}/type/{name}` |
 | Property key | `{base}/prop/{name}` |
 | Snapshot (data graph) | `{base}/snapshot/{snapshotId}` |
-| Schema graph | `{base}/snapshot/{snapshotId}/schema` |
+| Schema graph (optional, §8) | `{base}/snapshot/{snapshotId}/schema` |
 
-**Encoding.** Names and element IDs are percent-encoded as RFC 3986 path segments (UTF-8). `:` is kept as is. The original name of every vocabulary term is kept in `lpg:name`.
+**Base.** One trailing `/` of `base` is ignored, so `http://acme.org/plm/` and `http://acme.org/plm` give the same IRIs.
+
+**Encoding.** Names and element IDs are encoded as UTF-8; every byte outside `A-Z a-z 0-9 - . _ ~ :` becomes `%XX`, with upper-case hex. This single rule keeps local names usable as TriG prefixed names without escapes. The original name of every vocabulary term is kept in `lpg:name`.
 
 **Separate namespaces** for labels, types and keys: a label `Name` and a property key `Name` must not share an IRI.
 
@@ -97,13 +107,18 @@ lpg:source    a rdf:Property ; rdfs:domain lpg:Relationship ; rdfs:range lpg:Nod
 lpg:target    a rdf:Property ; rdfs:domain lpg:Relationship ; rdfs:range lpg:Node .
 
 # ---- graph vocabulary
-lpg:Label            a rdfs:Class .                              # an individual, not a class
-lpg:RelationshipType a rdfs:Class .                              # an individual, not a property
+lpg:Label            a rdfs:Class .                                # an individual, not a class
+lpg:RelationshipType a rdfs:Class .                                # an individual, not a property
 lpg:PropertyKey      a rdfs:Class ; rdfs:subClassOf rdf:Property . # keys are used as predicates
 
-lpg:name a rdf:Property ; rdfs:range xsd:string .               # original Neo4j name
+lpg:name a rdf:Property ; rdfs:range xsd:string .                 # original Neo4j name
 
-# ---- schema description (GRAPH TYPE)
+# ---- values
+lpg:uuid        a rdfs:Datatype .     # lexical form: lower-case 8-4-4-4-12 hex
+lpg:Cartesian2D a rdfs:Resource .     # CRS IRI for Cartesian 2D points in WKT literals
+lpg:Cartesian3D a rdfs:Resource .     # CRS IRI for Cartesian 3D points in WKT literals
+
+# ---- schema description (GRAPH TYPE, optional, §8)
 lpg:PropertySpec         a rdfs:Class .
 lpg:Constraint           a rdfs:Class .
 lpg:KeyConstraint        a rdfs:Class ; rdfs:subClassOf lpg:Constraint .
@@ -130,9 +145,23 @@ lpg:schemaGraph a rdf:Property ; rdfs:domain lpg:Snapshot .
 
 ## 7. Serialization rules
 
-### 7.1 Graph vocabulary
+### 7.1 Snapshot metadata
 
-Every label, relationship type and property key encountered in scope is declared once:
+In the default graph:
+
+```turtle
+<snapshot-iri> a lpg:Snapshot ;
+    lpg:database "<database name>" ;
+    lpg:scope "<scope query>" ;
+    prov:generatedAtTime "<export start, UTC, to the second>"^^xsd:dateTime ;
+    lpg:schemaGraph <schema-graph-iri> .          # only if a schema graph is emitted
+```
+
+The default `snapshotId` is the same instant, formatted `yyyyMMdd'T'HHmmss'Z'`.
+
+### 7.2 Graph vocabulary
+
+Every label, relationship type and property key **used by at least one serialized triple** is declared once. A property key whose in-scope values are all skipped (§11) is not declared.
 
 ```turtle
 l:Part        a lpg:Label ;            lpg:name "Part" .
@@ -140,7 +169,7 @@ t:USES        a lpg:RelationshipType ; lpg:name "USES" .
 p:partNumber  a lpg:PropertyKey ;      lpg:name "partNumber" .
 ```
 
-### 7.2 Nodes
+### 7.3 Nodes
 
 ```turtle
 <element-iri> a lpg:Node ;
@@ -150,7 +179,7 @@ p:partNumber  a lpg:PropertyKey ;      lpg:name "partNumber" .
     ... .
 ```
 
-### 7.3 Relationships
+### 7.4 Relationships
 
 ```turtle
 <rel-iri> a lpg:Relationship ;
@@ -163,12 +192,12 @@ p:partNumber  a lpg:PropertyKey ;      lpg:name "partNumber" .
 
 A relationship is a resource and nothing else. No direct `source type target` triple is emitted: it would be a derived view, it would collapse parallel relationships, and it would already be a modelling choice (§9.3).
 
-### 7.4 Property values
+### 7.5 Property values
 
 Property keys are the only part of the graph vocabulary used as predicates. RDF needs a predicate, and `p:quantity` is a fresh predicate with no built-in meaning: it reads "the LPG property `quantity` of this record".
 
 | Cypher type | RDF |
-|---|---|
+| --- | --- |
 | `STRING` | `xsd:string` |
 | `INTEGER` | `xsd:integer` |
 | `FLOAT` | `xsd:double` |
@@ -177,13 +206,22 @@ Property keys are the only part of the graph vocabulary used as predicates. RDF 
 | `LOCAL TIME` | `xsd:time`, no offset |
 | `ZONED TIME` | `xsd:time` with offset |
 | `LOCAL DATETIME` | `xsd:dateTime`, no offset |
-| `ZONED DATETIME` | `xsd:dateTime` with offset (named zone dropped, see §11) |
-| `DURATION` | `xsd:duration` |
-| `POINT` (WGS-84) | `geo:wktLiteral` with CRS84 |
-| `POINT` (Cartesian) | `geo:wktLiteral`, no CRS (open question) |
+| `ZONED DATETIME` | `xsd:dateTime` with offset (named zone dropped) |
+| `DURATION` | `xsd:duration`, see below |
+| `POINT` WGS-84 2D | `geo:wktLiteral`: `<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT(lon lat)` |
+| `POINT` WGS-84 3D | `geo:wktLiteral`: `<http://www.opengis.net/def/crs/OGC/0/CRS84h> POINT Z(lon lat h)` |
+| `POINT` Cartesian 2D | `geo:wktLiteral`: `<…lpg#Cartesian2D> POINT(x y)` |
+| `POINT` Cartesian 3D | `geo:wktLiteral`: `<…lpg#Cartesian3D> POINT Z(x y z)` |
+| `UUID` | `lpg:uuid` |
 | `LIST<T>` | RDF collection of the mapped elements |
-| `VECTOR` | not serialized in v0 |
+| `VECTOR` | not serialized |
 | Byte array | `xsd:base64Binary` |
+
+**Points.** A CRS IRI is always written. GeoSPARQL reads a `wktLiteral` without CRS as CRS84, so a Cartesian point without one would be silently misread as longitude/latitude; the `lpg:` CRS IRIs prevent that.
+
+**Offsets.** XSD offsets have hours and minutes only. An offset with a seconds component (e.g. `+01:00:30`) is written without its seconds.
+
+**Durations.** Seconds and nanoseconds are combined first. If months, days and combined seconds all have the same sign (or are zero), the value is written as `[-]PnYnMnDTnHnMn.nS` (years = months / 12, zero components omitted, `PT0S` for zero). Days are never converted into seconds. Otherwise the duration has no `xsd:duration` form and the property is **not serialized**. A list containing such a duration is not serialized as a whole.
 
 **Lists** are serialized as RDF collections (`rdf:List`), which keeps order and duplicates. An empty list is `rdf:nil`, so it stays distinguishable from an absent property:
 
@@ -194,22 +232,34 @@ Property keys are the only part of the graph vocabulary used as predicates. RDF 
 
 Collections are opaque to RDFS reasoning. Flattening them (e.g. into a domain predicate) is a downstream concern.
 
-## 8. Schema graph: the GRAPH TYPE, described as data
+### 7.6 Canonical forms and determinism
 
-The schema graph is a **clinical description** of the GRAPH TYPE in the `lpg:` vocabulary. It is not translated into SHACL or RDFS: any such translation is an interpretation, covered in §9.
+- Literals are written in their **XSD canonical lexical form** (e.g. `1.2E0` for a double, seconds always present in times, `Z` for a zero offset, padded base64 without line breaks). `xsd:string` literals are written without datatype.
+- Escaping follows canonical N-Triples, for every output syntax.
+- **Determinism:** the same data and the same scope give the same output, `prov:generatedAtTime` (and a default `snapshotId`) aside. The order of statements and the labels of blank nodes are implementation-defined; conformance is checked by RDF isomorphism.
+
+## 8. Schema graph: the GRAPH TYPE, described as data (optional)
+
+The schema graph is **optional**. An implementation that cannot read the GRAPH TYPE, or a database without one, emits no schema graph and no `lpg:schemaGraph` triple. Without a schema graph, an ontologist only has observations: any axiom derived from the data alone is a hypothesis about future data, not a guarantee.
+
+When emitted, the schema graph is a **clinical description** of the GRAPH TYPE in the `lpg:` vocabulary. It is not translated into SHACL or RDFS: any such translation is an interpretation, covered in §9.
 
 | GRAPH TYPE | Description |
-|---|---|
+| --- | --- |
 | Node element type `(:A => …)` | `l:A lpg:identifying true` |
 | Implied labels `(:A => :B&C)` | `l:A lpg:implies l:B, l:C` |
 | Property type `k :: T` | `l:A lpg:hasProperty [ lpg:key p:k ; lpg:datatype xsd:… ]` |
 | List type `k :: LIST<T NOT NULL>` | `[ lpg:key p:k ; lpg:listOf xsd:… ]` |
 | `NOT NULL` | `lpg:required true` on the property spec |
 | `IS KEY`, `IS UNIQUE` | `l:A lpg:hasConstraint [ a lpg:KeyConstraint ; lpg:onKeys ( p:k … ) ]` (resp. `lpg:UniquenessConstraint`) |
-| Relationship element type `(:A)-[:R => …]->(:B)` | `t:R lpg:identifying true ; lpg:fromLabel l:A ; lpg:toLabel l:B` |
+| Relationship element type `(:A)-[:R => …]->(:B)` | `t:R lpg:identifying true ; lpg:fromLabel l:A ; lpg:toLabel l:B` (endpoints only when declared) |
 | Relationship property types | `t:R lpg:hasProperty [ … ]`, same as nodes |
 
-**Semantics reminder.** A GRAPH TYPE is a set of **constraints**, checked at commit: a transaction that would leave the graph inconsistent fails (closed world). Snapshot data therefore always conforms to its schema graph.
+**Semantics reminder.** A GRAPH TYPE is a set of **constraints**, checked at commit: a transaction that would leave the graph inconsistent fails (closed world). Data read in one transaction conforms to the GRAPH TYPE of that transaction.
+
+**Reading the GRAPH TYPE.** `SHOW` commands are not allowed inside a read-only procedure. An implementation may read the schema in a **separate transaction**. In that case the data and the schema come from two reads, and their consistency is only guaranteed if the schema did not change in between; the implementation must document this.
+
+*Informative (observed on Neo4j 2026.09).* The GRAPH TYPE is stored as constraints. `SHOW CONSTRAINTS` returns structured rows: the constraint `type` (property type, existence, label existence for implied labels, source/target label for endpoints, key, uniqueness), the labels or types, the properties, the enforced label, the property type, and a `classification` column (`dependent` for constraints generated by element types, which identifies identifying labels and types). This is enough to build the schema graph without parsing the textual output of `SHOW CURRENT GRAPH TYPE`.
 
 ## 9. Standard interpretation (opt-in, outside the format)
 
@@ -249,13 +299,13 @@ CONSTRUCT { ?n a ex:Component } WHERE { ?n lpg:label l:Part }
 
 ### 9.2 Schema graph to SHACL and RDFS
 
-Once labels are read as classes, the schema graph can be translated by generic rules:
+When a schema graph is present and labels are read as classes, it can be translated by generic rules:
 
 - `lpg:implies` → `rdfs:subClassOf` (sound: the data conforms by construction), or a SHACL shape checking the implied label;
 - `lpg:hasProperty` with `lpg:datatype` / `lpg:required` → SHACL `sh:datatype` / `sh:minCount 1`;
 - `lpg:fromLabel` / `lpg:toLabel` → SHACL shapes on `lpg:source` / `lpg:target`, targeted by relationship type.
 
-The faithful reading of a GRAPH TYPE is SHACL (constraints). RDFS axioms are derived liftings, valid only because the snapshot data conforms. Their value is downstream: reasoning on, and validating, derived data.
+The faithful reading of a GRAPH TYPE is SHACL (constraints). RDFS axioms are derived liftings, valid only because the data conforms. Their value is downstream: reasoning on, and validating, derived data.
 
 ### 9.3 Direct relation triples
 
@@ -270,7 +320,7 @@ Parallel relationships collapse at this point, by the ontologist's choice, not i
 
 ## 10. Example
 
-GRAPH TYPE:
+GRAPH TYPE (used only by the optional schema graph):
 
 ```cypher
 ALTER CURRENT GRAPH TYPE SET {
@@ -305,31 +355,31 @@ Output (element IDs shortened for readability):
 s:20261005T140311Z a lpg:Snapshot ;
     lpg:database "plm" ;
     lpg:scope "MATCH (p:Part {partNumber: 'P-001'})-[r:USES]->(m) RETURN p, r, m" ;
-    lpg:schemaGraph <http://acme.org/plm/snapshot/20261005T140311Z/schema> ;
-    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
+    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime ;
+    lpg:schemaGraph <http://acme.org/plm/snapshot/20261005T140311Z/schema> .   # only with a schema graph
 
 # ---------- data graph
 s:20261005T140311Z {
 
+    l:Material   a lpg:Label ;            lpg:name "Material" .
     l:Part       a lpg:Label ;            lpg:name "Part" .
     l:Substance  a lpg:Label ;            lpg:name "Substance" .
-    l:Material   a lpg:Label ;            lpg:name "Material" .
     t:USES       a lpg:RelationshipType ; lpg:name "USES" .
-    p:partNumber a lpg:PropertyKey ;      lpg:name "partNumber" .
-    p:mass       a lpg:PropertyKey ;      lpg:name "mass" .
-    p:tags       a lpg:PropertyKey ;      lpg:name "tags" .
     p:casNumber  a lpg:PropertyKey ;      lpg:name "casNumber" .
+    p:mass       a lpg:PropertyKey ;      lpg:name "mass" .
+    p:partNumber a lpg:PropertyKey ;      lpg:name "partNumber" .
     p:quantity   a lpg:PropertyKey ;      lpg:name "quantity" .
+    p:tags       a lpg:PropertyKey ;      lpg:name "tags" .
 
     e:4:a1b2:12 a lpg:Node ;
         lpg:label l:Part ;
         lpg:elementId "4:a1b2:12" ;
+        p:mass 1.2E0 ;
         p:partNumber "P-001" ;
-        p:mass 1.2e0 ;
         p:tags ( "steel" "EU" "steel" ) .
 
     e:4:a1b2:57 a lpg:Node ;
-        lpg:label l:Substance, l:Material ;
+        lpg:label l:Material, l:Substance ;
         lpg:elementId "4:a1b2:57" ;
         p:casNumber "335-67-1" .
 
@@ -341,7 +391,7 @@ s:20261005T140311Z {
         p:quantity 4 .
 }
 
-# ---------- schema graph
+# ---------- schema graph (optional)
 <http://acme.org/plm/snapshot/20261005T140311Z/schema> {
 
     l:Part lpg:identifying true ;
@@ -364,24 +414,25 @@ s:20261005T140311Z {
 
 **Guarantees.**
 
-- The snapshot is a consistent state: one read transaction, and the data satisfies the GRAPH TYPE.
-- In-scope nodes and relationships (labels, type, endpoints, properties, list order and duplicates, empty lists, parallel relationships) can be rebuilt from the snapshot.
+- The data of a snapshot is a consistent state: one read transaction.
+- In-scope nodes and relationships (labels, type, endpoints, properties, list order and duplicates, empty lists, parallel relationships) can be rebuilt from the snapshot, except for the losses below.
 
 **Known losses.**
 
 - `VECTOR` properties are not serialized.
+- `DURATION` values with mixed-sign components are not serialized (and neither is a list containing one).
 - Zoned temporal values keep their offset only; the named time zone (e.g. `Europe/Paris`) is dropped.
-- A `DURATION` with mixed-sign components may not be representable as an `xsd:duration`, which carries a single sign.
-- Cartesian points have no standard CRS IRI.
+- Offsets with a seconds component lose their seconds.
+- Without a schema graph, the universal statements of the GRAPH TYPE (implied labels, required properties, endpoints, keys) are not in the snapshot.
 
 ## 12. Open questions
 
-- Final IRI of the `lpg:` namespace.
+- Final IRI of the `lpg:` namespace (and so of `lpg:uuid`, `lpg:Cartesian2D`, `lpg:Cartesian3D`).
 - `VECTOR`: always excluded, or opt-in.
-- Zone IDs and Cartesian CRS: dedicated `lpg:` properties, or accepted losses.
-- `snapshotId` format: timestamp or transaction ID.
+- Named time zones: a dedicated `lpg:` property, or an accepted loss.
+- Schema graph: read in a separate transaction (with the documented consistency caveat), or wait for a way to read the GRAPH TYPE inside the read transaction.
+- Confirm how `UUID` values surface in Cypher and in the procedure API, and the exact lexical form.
 - Ship the §9 interpretation artifacts (OWL 2 RL, RDFS, rules) as files next to the spec, and test them on Jena (rdfs7 with `rdf:type`, `hasValue` support in the chosen OWL profile).
-- Confirm that GRAPH TYPE endpoint labels are enforced for every relationship of the type (precondition for any domain/range derived from `lpg:fromLabel` / `lpg:toLabel`).
 
 ## 13. Downstream (informative)
 

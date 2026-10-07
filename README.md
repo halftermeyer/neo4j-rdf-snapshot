@@ -104,7 +104,7 @@ s:20261007T085108Z {
 | `format` | `'trig'` | `'trig'` or `'nquads'` |
 | `snapshotId` | UTC timestamp `yyyyMMdd'T'HHmmss'Z'` | last segment of the snapshot IRI |
 
-The procedure is read-only. The scope query runs in the procedure's transaction, so the snapshot is one consistent read. Every node and relationship in any column is in scope, including inside lists and paths. Endpoints of in-scope relationships are added. Output is deterministic: the same data gives the same bytes, apart from `prov:generatedAtTime`.
+The procedure is read-only. The scope query runs in the procedure's transaction, so the snapshot is one consistent read. Every node and relationship in any column is in scope, including inside lists, map values and paths. Endpoints of in-scope relationships are added. Output is deterministic: the same data gives the same bytes, apart from `prov:generatedAtTime`.
 
 ## Non-goals
 

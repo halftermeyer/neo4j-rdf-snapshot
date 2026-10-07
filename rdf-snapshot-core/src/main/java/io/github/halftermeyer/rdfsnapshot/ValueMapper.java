@@ -18,6 +18,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Maps property values to RDF literals (SPEC §7.4).
@@ -35,6 +36,7 @@ import java.util.List;
  *   <tr><td>{@code ZONED DATETIME}</td><td>{@link ZonedDateTime}, {@link OffsetDateTime}</td></tr>
  *   <tr><td>{@code DURATION}</td><td>{@link LpgDuration}</td></tr>
  *   <tr><td>{@code POINT}</td><td>{@link LpgPoint}</td></tr>
+ *   <tr><td>{@code UUID}</td><td>{@link UUID}</td></tr>
  *   <tr><td>byte array</td><td>{@code byte[]}</td></tr>
  *   <tr><td>{@code LIST<T>}</td><td>{@link List} of any of the scalar types above</td></tr>
  *   <tr><td>{@code VECTOR}</td><td>{@link LpgVector} (not serialized)</td></tr>
@@ -43,6 +45,8 @@ import java.util.List;
 public final class ValueMapper {
     static final String CRS84 = "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> ";
     static final String CRS84H = "<http://www.opengis.net/def/crs/OGC/0/CRS84h> ";
+    static final String CARTESIAN_2D = "<" + Vocab.LPG_CARTESIAN_2D.value() + "> ";
+    static final String CARTESIAN_3D = "<" + Vocab.LPG_CARTESIAN_3D.value() + "> ";
 
     private ValueMapper() {}
 
@@ -123,6 +127,8 @@ public final class ValueMapper {
             }
             case LpgPoint p -> lit(wkt(p), Vocab.GEO_WKT_LITERAL);
             case byte[] bytes -> lit(Base64.getEncoder().encodeToString(bytes), Vocab.XSD_BASE64_BINARY);
+            // UUID.toString() is the lower-case 8-4-4-4-12 form (SPEC §6)
+            case UUID uuid -> lit(uuid.toString(), Vocab.LPG_UUID);
             case LpgVector v -> null;
             default -> throw new IllegalArgumentException(
                     "Unsupported property value type: " + value.getClass().getName());
@@ -231,8 +237,9 @@ public final class ValueMapper {
     }
 
     /**
-     * {@code geo:wktLiteral}. WGS-84 points carry the CRS84 IRI (CRS84h in 3D); Cartesian points
-     * carry no CRS (SPEC §7.4). Coordinates in plain decimal notation.
+     * {@code geo:wktLiteral} with a CRS IRI (SPEC §7.5): CRS84 / CRS84h for WGS-84 2D / 3D,
+     * {@code lpg:Cartesian2D} / {@code lpg:Cartesian3D} for Cartesian points. Coordinates in plain
+     * decimal notation.
      */
     static String wkt(LpgPoint p) {
         double[] c = p.coordinates();
@@ -247,7 +254,8 @@ public final class ValueMapper {
         return switch (p.crs()) {
             case WGS84_2D -> CRS84 + shape;
             case WGS84_3D -> CRS84H + shape;
-            case CARTESIAN_2D, CARTESIAN_3D -> shape;
+            case CARTESIAN_2D -> CARTESIAN_2D + shape;
+            case CARTESIAN_3D -> CARTESIAN_3D + shape;
         };
     }
 

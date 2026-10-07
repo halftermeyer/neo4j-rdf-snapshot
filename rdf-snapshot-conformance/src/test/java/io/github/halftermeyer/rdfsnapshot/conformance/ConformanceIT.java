@@ -24,8 +24,9 @@ import org.junit.jupiter.api.TestFactory;
 
 /**
  * Runs every case of {@code conformance/}. For each case: the N-Quads and the TriG output are each
- * isomorphic to {@code expected.trig} (after normalization), isomorphic to each other (as is),
- * and byte-identical across two runs.
+ * isomorphic to {@code expected.trig} (after normalization), isomorphic to each other, and
+ * byte-identical across two runs. The last two checks mask {@code prov:generatedAtTime}, the
+ * export instant, which differs between exports.
  */
 class ConformanceIT {
     private static final Path CASES = Path.of(System.getProperty("conformance.dir"));
@@ -47,7 +48,7 @@ class ConformanceIT {
 
             assertIsomorphic(c, "N-Quads output", expected, fromNQuads);
             assertIsomorphic(c, "TriG output", expected, fromTrig);
-            if (!IsoMatcher.isomorphic(fromNQuads, fromTrig)) {
+            if (!IsoMatcher.isomorphic(parse(maskTime(nquads), Lang.NQUADS), parse(maskTime(trig), Lang.TRIG))) {
                 fail(c.name() + ": N-Quads and TriG outputs are not isomorphic");
             }
             assertEquals(maskTime(nquads), maskTime(runner.export(c, "nquads")), c.name() + ": N-Quads differs between runs");
@@ -55,12 +56,9 @@ class ConformanceIT {
         }));
     }
 
-    /**
-     * {@code prov:generatedAtTime} is the export instant, so two runs may differ there and nowhere
-     * else: its literal is masked before comparing bytes.
-     */
+    /** Replaces the {@code prov:generatedAtTime} value with a constant, keeping a valid literal. */
     static String maskTime(String text) {
-        return GENERATED_AT.matcher(text).replaceAll("$1\"MASKED\"^^");
+        return GENERATED_AT.matcher(text).replaceAll("$1\"2000-01-01T00:00:00Z\"^^");
     }
 
     private static final Pattern GENERATED_AT =

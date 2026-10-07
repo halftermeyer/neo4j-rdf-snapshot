@@ -3,6 +3,8 @@
 Choices made where `SPEC.md` is silent or ambiguous. One entry per decision: context, options, choice, why.
 Entries marked **[spec]** propose a change to the spec.
 
+**SPEC v0.3** (2026-10-07) adopted D1, D2, D4 to D8, D11, D13, D14 and the spec changes of D6, D7 and D21; those entries remain as rationale. It superseded D9 (Cartesian CRS IRIs) and D16 (maps are now containers), and added `UUID` (D24).
+
 ## Identifiers
 
 ### D1. Which characters stay unencoded in names and element IDs
@@ -41,7 +43,7 @@ Entries marked **[spec]** propose a change to the spec.
   - A zero offset is written `Z`; other offsets `±hh:mm`.
 - **Why.** These are the XSD canonical forms. Java's `toString` differs (`10:15`, `+12345-01-01`), so formatting is done by hand.
 
-### D6. Offsets with a seconds component **[spec]**
+### D6. Offsets with a seconds component (adopted in SPEC v0.3, §7.5)
 
 - **Context.** Neo4j accepts offsets such as `+01:00:30`. XSD offsets have minutes only.
 - **Options.** (a) Emit `+01:00:30` (ill-typed literal). (b) Drop the seconds. (c) Skip the property.
@@ -49,7 +51,7 @@ Entries marked **[spec]** propose a change to the spec.
 - **Why.** Keeps a valid literal and loses at most 59 seconds of offset, which almost never occurs in practice.
 - **Spec change.** Add this to the known losses of §11.
 
-### D7. Durations with mixed signs **[spec]**
+### D7. Durations with mixed signs (adopted in SPEC v0.3, §7.5)
 
 - **Context.** SPEC §11: a `DURATION` with mixed-sign components "may not be representable". Neo4j stores months, days, seconds and nanoseconds with nanoseconds always in `[0, 1e9)`, so `-0.5s` is seconds `-1`, nanos `500000000`.
 - **Options.** (a) Emit an ill-typed literal. (b) Skip the property. (c) Normalize days into seconds (wrong: a day is not always 86400 s).
@@ -57,21 +59,21 @@ Entries marked **[spec]** propose a change to the spec.
 - **Why.** Ill-typed literals break downstream tools. Skipping is the known loss the spec already announces; (c) would change the value.
 - **Spec change.** §11 should say explicitly that such properties are not serialized.
 
-### D8. Points
+### D8. Points (adopted in SPEC v0.3, §7.5)
 
 - **Context.** SPEC §7.4: WGS-84 → `geo:wktLiteral` "with CRS84"; Cartesian → no CRS.
 - **Choice.**
   - 2D WGS-84 (SRID 4326): `<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT(lon lat)`.
   - 3D WGS-84 (SRID 4979): `<http://www.opengis.net/def/crs/OGC/0/CRS84h> POINT Z(lon lat h)`. CRS84 is two-dimensional; CRS84h is its 3D (ellipsoidal height) counterpart in GeoSPARQL 1.1.
-  - Cartesian 2D / 3D: `POINT(x y)` / `POINT Z(x y z)`.
+  - Cartesian 2D / 3D: `<lpg:Cartesian2D> POINT(x y)` / `<lpg:Cartesian3D> POINT Z(x y z)` (see D9).
   - Coordinates in plain decimal notation, shortest round-trip digits, no trailing zeros (`2.0` → `2`, `1e-7` → `0.0000001`).
 - **Why.** CRS84 is written explicitly, as the spec asks. Plain decimals are the most widely parsed WKT number form.
 
-### D9. Cartesian points read as CRS84 **[spec]**
+### D9. Cartesian points read as CRS84 (superseded by SPEC v0.3)
 
 - **Context.** GeoSPARQL says a `wktLiteral` without CRS IRI is in CRS84. A Cartesian point without CRS will therefore be read as longitude/latitude by any GeoSPARQL engine.
-- **Choice.** Follow the spec (no CRS) for now.
-- **Spec change.** Resolve the §12 open question with an `lpg:` CRS IRI for Cartesian points (e.g. `lpg:Cartesian2D`, `lpg:Cartesian3D`), or a dedicated literal datatype, so the value is not silently misread.
+- **Choice (v0.2).** No CRS, as the spec then said, with a proposal for `lpg:` CRS IRIs.
+- **Now.** SPEC v0.3 §7.5: `<lpg:Cartesian2D> POINT(x y)` and `<lpg:Cartesian3D> POINT Z(x y z)`, implemented.
 
 ### D10. Byte arrays
 
@@ -115,11 +117,11 @@ Entries marked **[spec]** propose a change to the spec.
 
 ## Procedure
 
-### D16. Nodes inside maps
+### D16. Nodes inside maps (reversed by SPEC v0.3)
 
-- **Context.** SPEC §3 looks inside `LIST` and `PATH` values; "all other returned values are ignored". A `MAP` can contain nodes (`RETURN {n: n}`).
-- **Choice.** Maps are ignored, nodes and relationships inside them included (conformance case 05 checks it).
-- **Why.** It's the literal reading of §3. Users who want those elements can return them in a list.
+- **Context.** SPEC v0.2 §3 looked inside `LIST` and `PATH` values only. A `MAP` can contain nodes (`RETURN {n: n}`).
+- **Choice (v0.2).** Maps were ignored, as a literal reading of §3.
+- **Now.** SPEC v0.3 §3 makes maps containers: nodes and relationships in map values are in scope, recursively. Conformance case 05 checks it.
 
 ### D17. Config validation
 
@@ -142,7 +144,7 @@ Entries marked **[spec]** propose a change to the spec.
 
 ## Schema graph
 
-### D21. Schema graph (SPEC §8) not implemented **[spec]**
+### D21. Schema graph (SPEC §8) not implemented
 
 - **Context.** The schema graph describes the GRAPH TYPE. Milestone 3 investigated it on Neo4j 2026.09.0 Enterprise; GRAPH TYPE handling was then removed from the backlog.
 - **Choice.** No schema graph, no `lpg:schemaGraph` triple, no `includeSchema` config key. The procedure accepts `base`, `format` and `snapshotId` only. Conformance case 01 (SPEC §10, which needs a graph type) is not in the suite; case 02 covers the same data without one.
@@ -153,14 +155,19 @@ Entries marked **[spec]** propose a change to the spec.
   - A node element type must have a property type or an implied label (`(:A =>)` is rejected), so every identifying label leaves at least one dependent constraint. Relationship endpoints are optional (`()-[:R => {...}]->()`). `ANY` and `VECTOR ... NOT NULL` are rejected as property types.
   - **Blocker:** inside a `Mode.READ` procedure, `SHOW CONSTRAINTS` and `SHOW CURRENT GRAPH TYPE` fail ("not allowed ... overridden by READ"). The public schema API (`tx.schema().getConstraints()`) gives the constraint type, owner, keys and property types, but neither the implied/endpoint label nor the classification. The options were: the kernel's internal `ConstraintDescriptor` in the same transaction; `SHOW CONSTRAINTS` in a second transaction; or a non-READ procedure mode.
   - The public `PropertyType` enum has a `UUID` member, which SPEC §7.4 doesn't map.
-- **Spec change.** Mark §8 as optional for implementations, and say how a reader can get the GRAPH TYPE from a read-only context, or accept a schema read outside the snapshot transaction. Add `UUID` to §7.4 if Neo4j exposes it as a property type.
+- **Spec.** v0.3 made §8 optional and allows reading the schema in a separate transaction, with a documented consistency caveat. GRAPH TYPE handling is still out of the backlog here.
+
+### D24. `UUID` values
+
+- **Observed** (2026.09). `uuid('3F2504E0-…')` returns a value of type `UUID` (`randomUUID()` still returns a `STRING`). It can be stored as a property, also in lists (`LIST<UUID NOT NULL>`). The embedded API returns `java.util.UUID`, and arrays of it for lists.
+- **Choice.** `"<uuid>"^^lpg:uuid` with `UUID.toString()` as lexical form, which is the lower-case 8-4-4-4-12 form of SPEC v0.3 §6. Conformance case 07 checks a single value and a list.
 
 ## Conformance suite
 
 ### D22. Comparing outputs with element IDs and timestamps
 
 - **Context.** Element IDs are chosen by the database and `prov:generatedAtTime` is the export instant, so neither can be written into `expected.trig`. Yet two runs must be byte-identical.
-- **Choice.** Before the isomorphism check, element IRIs become blank nodes, once each has been checked against its `lpg:elementId`. `lpg:elementId` literals and `prov:generatedAtTime` (after a datatype check) become constants. The check that two runs give identical bytes masks the `prov:generatedAtTime` literal only. The procedure has no option to fix the timestamp.
+- **Choice.** Before the isomorphism check, element IRIs become blank nodes, once each has been checked against its `lpg:elementId`. `lpg:elementId` literals and `prov:generatedAtTime` (after a datatype check) become constants. The check that two runs give identical bytes, and the check that the N-Quads and TriG outputs are isomorphic, mask the `prov:generatedAtTime` literal only (two exports may fall in different seconds). The procedure has no option to fix the timestamp.
 - **Why.** These rules check everything that doesn't depend on the database instance, and need no test-only feature in the procedure. Element IRIs are compared up to renaming, which is exactly what SPEC §5 says they guarantee within one snapshot.
 
 ### D23. Conformance case 1

@@ -24,6 +24,8 @@ CREATE (:Values {
   cartesian: point({x: 1, y: -2.5}),
   cartesian3d: point({x: 1, y: 2, z: 3}),
   bytes: $bytes,
+  uuid: uuid('3F2504E0-4F89-11D3-9A0C-0305E82C3301'),
+  uuids: [uuid('3F2504E0-4F89-11D3-9A0C-0305E82C3301'), uuid('00000000-0000-0000-0000-000000000000')],
   dates: [date('2026-01-01'), date('2026-12-31')],
   floats: [1.0, 2.5],
   embedding: VECTOR([1.0, 2.0, 3.0], 3, FLOAT32)

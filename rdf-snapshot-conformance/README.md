@@ -17,9 +17,9 @@ conformance/<case>/
 | `02-no-graph-type` | SPEC §10 data, no schema graph, no `lpg:schemaGraph` |
 | `03-lists` | order, duplicates, empty list as `rdf:nil` |
 | `04-parallel-relationships` | identical parallel relationships stay distinct |
-| `05-paths-and-nested-lists` | path decomposition, nested lists, deduplication, maps ignored |
+| `05-paths-and-nested-lists` | path decomposition, nested lists and maps, deduplication |
 | `06-closure-rule` | endpoints of in-scope relationships are added |
-| `07-value-types` | every value type of SPEC §7.4; `VECTOR` and mixed-sign durations absent |
+| `07-value-types` | every value type of SPEC §7.5; `VECTOR` and mixed-sign durations absent |
 | `08-name-encoding` | percent-encoding of names, `lpg:name`, separate namespaces |
 
 ## Running a case
@@ -41,7 +41,7 @@ The two normalized datasets must be isomorphic. In `expected.trig`, element IRIs
 
 The JUnit runner in [`src/test`](src/test/java/io/github/halftermeyer/rdfsnapshot/conformance) does this against Neo4j Enterprise in a Testcontainer, for the `rdfsnapshot.export` procedure. It also checks, for every case:
 
-- the N-Quads and TriG outputs are isomorphic to each other, without normalization;
+- the N-Quads and TriG outputs are isomorphic to each other (only `prov:generatedAtTime` is masked: two exports may fall in different seconds);
 - two exports of the same database are byte-identical, in each format, apart from the `prov:generatedAtTime` literal.
 
 ```

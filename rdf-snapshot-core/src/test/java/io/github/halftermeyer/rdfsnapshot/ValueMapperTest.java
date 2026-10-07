@@ -141,10 +141,16 @@ class ValueMapperTest {
                 new LpgPoint(LpgPoint.Crs.WGS84_2D, new double[] {2.35, 48.85}));
         assertLiteral("<http://www.opengis.net/def/crs/OGC/0/CRS84h> POINT Z(2.35 48.85 35)", Vocab.GEO_WKT_LITERAL,
                 new LpgPoint(LpgPoint.Crs.WGS84_3D, new double[] {2.35, 48.85, 35.0}));
-        assertLiteral("POINT(1 -2.5)", Vocab.GEO_WKT_LITERAL,
+        assertLiteral("<https://example.org/lpg#Cartesian2D> POINT(1 -2.5)", Vocab.GEO_WKT_LITERAL,
                 new LpgPoint(LpgPoint.Crs.CARTESIAN_2D, new double[] {1.0, -2.5}));
-        assertLiteral("POINT Z(0 0.0000001 10000000)", Vocab.GEO_WKT_LITERAL,
+        assertLiteral("<https://example.org/lpg#Cartesian3D> POINT Z(0 0.0000001 10000000)", Vocab.GEO_WKT_LITERAL,
                 new LpgPoint(LpgPoint.Crs.CARTESIAN_3D, new double[] {-0.0, 1e-7, 1e7}));
+    }
+
+    @Test
+    void uuids() {
+        assertLiteral("3f2504e0-4f89-11d3-9a0c-0305e82c3301", Vocab.LPG_UUID,
+                java.util.UUID.fromString("3F2504E0-4F89-11D3-9A0C-0305E82C3301"));
     }
 
     @Test

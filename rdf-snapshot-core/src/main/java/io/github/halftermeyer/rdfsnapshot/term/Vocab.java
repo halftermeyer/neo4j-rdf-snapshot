@@ -48,6 +48,11 @@ public final class Vocab {
     public static final Iri LPG_PROPERTY_KEY = lpg("PropertyKey");
     public static final Iri LPG_NAME = lpg("name");
 
+    // lpg: values
+    public static final Iri LPG_UUID = lpg("uuid");
+    public static final Iri LPG_CARTESIAN_2D = lpg("Cartesian2D");
+    public static final Iri LPG_CARTESIAN_3D = lpg("Cartesian3D");
+
     // lpg: snapshot
     public static final Iri LPG_SNAPSHOT = lpg("Snapshot");
     public static final Iri LPG_DATABASE = lpg("database");
