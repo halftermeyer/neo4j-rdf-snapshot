@@ -1,0 +1,32 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix lpg:  <https://example.org/lpg#> .
+@prefix e:    <http://acme.org/plm/e/> .
+@prefix l:    <http://acme.org/plm/label/> .
+@prefix t:    <http://acme.org/plm/type/> .
+@prefix p:    <http://acme.org/plm/prop/> .
+@prefix s:    <http://acme.org/plm/snapshot/> .
+
+s:20261005T140311Z a lpg:Snapshot ;
+    lpg:database "conformance" ;
+    lpg:scope "MATCH ()-[r:OWNS]->() RETURN r" ;
+    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
+
+s:20261005T140311Z {
+
+    l:Car    a lpg:Label ;            lpg:name "Car" .
+    l:Person a lpg:Label ;            lpg:name "Person" .
+    t:OWNS   a lpg:RelationshipType ; lpg:name "OWNS" .
+    p:name   a lpg:PropertyKey ;      lpg:name "name" .
+    p:plate  a lpg:PropertyKey ;      lpg:name "plate" .
+    p:since  a lpg:PropertyKey ;      lpg:name "since" .
+
+    e:ann a lpg:Node ; lpg:label l:Person ; lpg:elementId "ann" ; p:name "Ann" .
+    e:car a lpg:Node ; lpg:label l:Car ;    lpg:elementId "car" ; p:plate "AB-123" .
+
+    e:owns a lpg:Relationship ;
+        lpg:type t:OWNS ; lpg:elementId "owns" ;
+        lpg:source e:ann ; lpg:target e:car ;
+        p:since 2020 .
+}

@@ -1,0 +1,29 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix lpg:  <https://example.org/lpg#> .
+@prefix e:    <http://acme.org/plm/e/> .
+@prefix l:    <http://acme.org/plm/label/> .
+@prefix t:    <http://acme.org/plm/type/> .
+@prefix p:    <http://acme.org/plm/prop/> .
+@prefix s:    <http://acme.org/plm/snapshot/> .
+
+s:20261005T140311Z a lpg:Snapshot ;
+    lpg:database "conformance" ;
+    lpg:scope "MATCH p = (:Step {n: 1})-[:NEXT]->{2}(:Step {n: 3}) MATCH (last:Step {n: 4}), (o:Other) RETURN p, [nodes(p), [relationships(p)[0]]] AS nested, {node: last} AS map, o.n AS number, 'text' AS string" ;
+    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
+
+# Step 4 is only inside a map, and Other only contributes a number: neither is in scope.
+s:20261005T140311Z {
+
+    l:Step a lpg:Label ;            lpg:name "Step" .
+    t:NEXT a lpg:RelationshipType ; lpg:name "NEXT" .
+    p:n    a lpg:PropertyKey ;      lpg:name "n" .
+
+    e:s1 a lpg:Node ; lpg:label l:Step ; lpg:elementId "s1" ; p:n 1 .
+    e:s2 a lpg:Node ; lpg:label l:Step ; lpg:elementId "s2" ; p:n 2 .
+    e:s3 a lpg:Node ; lpg:label l:Step ; lpg:elementId "s3" ; p:n 3 .
+
+    e:s1s2 a lpg:Relationship ; lpg:type t:NEXT ; lpg:elementId "s1s2" ; lpg:source e:s1 ; lpg:target e:s2 .
+    e:s2s3 a lpg:Relationship ; lpg:type t:NEXT ; lpg:elementId "s2s3" ; lpg:source e:s2 ; lpg:target e:s3 .
+}

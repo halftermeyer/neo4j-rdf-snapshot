@@ -1,0 +1,50 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix lpg:  <https://example.org/lpg#> .
+@prefix e:    <http://acme.org/plm/e/> .
+@prefix l:    <http://acme.org/plm/label/> .
+@prefix t:    <http://acme.org/plm/type/> .
+@prefix p:    <http://acme.org/plm/prop/> .
+@prefix s:    <http://acme.org/plm/snapshot/> .
+
+# ---------- snapshot metadata (default graph): no lpg:schemaGraph
+s:20261005T140311Z a lpg:Snapshot ;
+    lpg:database "conformance" ;
+    lpg:scope "MATCH (p:Part {partNumber: 'P-001'})-[r:USES]->(m) RETURN p, r, m" ;
+    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
+
+# ---------- data graph
+s:20261005T140311Z {
+
+    l:Material   a lpg:Label ;            lpg:name "Material" .
+    l:Part       a lpg:Label ;            lpg:name "Part" .
+    l:Substance  a lpg:Label ;            lpg:name "Substance" .
+    t:USES       a lpg:RelationshipType ; lpg:name "USES" .
+    p:casNumber  a lpg:PropertyKey ;      lpg:name "casNumber" .
+    p:mass       a lpg:PropertyKey ;      lpg:name "mass" .
+    p:partNumber a lpg:PropertyKey ;      lpg:name "partNumber" .
+    p:quantity   a lpg:PropertyKey ;      lpg:name "quantity" .
+    p:tags       a lpg:PropertyKey ;      lpg:name "tags" .
+
+    e:part a lpg:Node ;
+        lpg:label l:Part ;
+        lpg:elementId "part" ;
+        p:mass 1.2E0 ;
+        p:partNumber "P-001" ;
+        p:tags ( "steel" "EU" "steel" ) .
+
+    e:substance a lpg:Node ;
+        lpg:label l:Material, l:Substance ;
+        lpg:elementId "substance" ;
+        p:casNumber "335-67-1" .
+
+    e:uses a lpg:Relationship ;
+        lpg:type t:USES ;
+        lpg:elementId "uses" ;
+        lpg:source e:part ;
+        lpg:target e:substance ;
+        p:quantity 4 .
+}
+
+# ---------- no schema graph

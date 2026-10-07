@@ -1,0 +1,45 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix lpg:  <https://example.org/lpg#> .
+@prefix e:    <http://acme.org/plm/e/> .
+@prefix l:    <http://acme.org/plm/label/> .
+@prefix t:    <http://acme.org/plm/type/> .
+@prefix p:    <http://acme.org/plm/prop/> .
+@prefix s:    <http://acme.org/plm/snapshot/> .
+
+s:20261005T140311Z a lpg:Snapshot ;
+    lpg:database "conformance" ;
+    lpg:scope "MATCH (:Station {name: 'A'})-[r:LINK]-(:Station {name: 'B'}) RETURN r" ;
+    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
+
+s:20261005T140311Z {
+
+    l:Station a lpg:Label ;            lpg:name "Station" .
+    t:LINK    a lpg:RelationshipType ; lpg:name "LINK" .
+    p:line    a lpg:PropertyKey ;      lpg:name "line" .
+    p:name    a lpg:PropertyKey ;      lpg:name "name" .
+
+    e:a a lpg:Node ; lpg:label l:Station ; lpg:elementId "a" ; p:name "A" .
+    e:b a lpg:Node ; lpg:label l:Station ; lpg:elementId "b" ; p:name "B" .
+
+    # two relationships with the same endpoints, type and properties: two resources
+    e:ab1 a lpg:Relationship ;
+        lpg:type t:LINK ; lpg:elementId "ab1" ;
+        lpg:source e:a ; lpg:target e:b ;
+        p:line 1 .
+
+    e:ab1bis a lpg:Relationship ;
+        lpg:type t:LINK ; lpg:elementId "ab1bis" ;
+        lpg:source e:a ; lpg:target e:b ;
+        p:line 1 .
+
+    e:ab2 a lpg:Relationship ;
+        lpg:type t:LINK ; lpg:elementId "ab2" ;
+        lpg:source e:a ; lpg:target e:b ;
+        p:line 2 .
+
+    e:ba a lpg:Relationship ;
+        lpg:type t:LINK ; lpg:elementId "ba" ;
+        lpg:source e:b ; lpg:target e:a .
+}

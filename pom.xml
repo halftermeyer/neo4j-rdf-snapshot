@@ -22,6 +22,8 @@
 
     <modules>
         <module>rdf-snapshot-core</module>
+        <module>rdf-snapshot-procedures</module>
+        <module>rdf-snapshot-conformance</module>
     </modules>
 
     <properties>

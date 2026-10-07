@@ -1,0 +1,38 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix lpg:  <https://example.org/lpg#> .
+@prefix e:    <http://acme.org/plm/e/> .
+@prefix l:    <http://acme.org/plm/label/> .
+@prefix t:    <http://acme.org/plm/type/> .
+@prefix p:    <http://acme.org/plm/prop/> .
+@prefix s:    <http://acme.org/plm/snapshot/> .
+
+s:20261005T140311Z a lpg:Snapshot ;
+    lpg:database "conformance" ;
+    lpg:scope "MATCH (i:Item) RETURN i" ;
+    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
+
+s:20261005T140311Z {
+
+    l:Item   a lpg:Label ;       lpg:name "Item" .
+    p:counts a lpg:PropertyKey ; lpg:name "counts" .
+    p:empty  a lpg:PropertyKey ; lpg:name "empty" .
+    p:flags  a lpg:PropertyKey ; lpg:name "flags" .
+    p:name   a lpg:PropertyKey ; lpg:name "name" .
+    p:tags   a lpg:PropertyKey ; lpg:name "tags" .
+
+    e:withLists a lpg:Node ;
+        lpg:label l:Item ;
+        lpg:elementId "withLists" ;
+        p:counts ( 3 1 3 2 ) ;
+        p:empty () ;
+        p:flags ( true false true ) ;
+        p:name "with lists" ;
+        p:tags ( "steel" "EU" "steel" ) .
+
+    e:withoutLists a lpg:Node ;
+        lpg:label l:Item ;
+        lpg:elementId "withoutLists" ;
+        p:name "without lists" .
+}

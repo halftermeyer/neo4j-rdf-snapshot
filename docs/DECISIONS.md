@@ -116,3 +116,30 @@ Entries marked **[spec]** propose a change to the spec.
 - **Context.** The TriG sink must group by subject and inline blank nodes, and the procedure must stream chunks, all through the same `QuadSink` interface.
 - **Choice.** The serializer guarantees: graphs in sequence (default graph first, never reopened); quads grouped by subject; the blank nodes describing a subject's objects emitted right after it, before the next IRI subject, each referenced once. It calls `flush()` after each complete subject block.
 - **Why.** A pretty printer can then work on one subject block at a time, so memory stays bounded, and `flush()` marks the natural chunk boundaries.
+
+## Procedure
+
+### D16. Nodes inside maps
+
+- **Context.** SPEC §3 looks inside `LIST` and `PATH` values; "all other returned values are ignored". A `MAP` can contain nodes (`RETURN {n: n}`).
+- **Choice.** Maps are ignored, nodes and relationships inside them included (conformance case 05 checks it).
+- **Why.** It's the literal reading of §3. Users who want those elements can return them in a list.
+
+### D17. Config validation
+
+- **Choice.** Unknown config keys are an error, as is a missing or blank `base`, a `format` other than `'nquads'` / `'trig'`, an empty `snapshotId`, or a non-boolean `includeSchema`. The default `snapshotId` uses the same instant as `prov:generatedAtTime` (D14).
+- **Why.** A typo such as `snapshotID` would otherwise be silently ignored.
+
+### D18. Procedure class loading in Neo4j 2026.x
+
+- **Observed** (2026.09). `plugins/*` is on the server classpath, and the classes carrying procedure annotations are also loaded again by a separate `ProcedureClassLoader`. All other classes of the jar resolve through the parent loader. The two sides are different runtime packages, so any package-private access from the `@Procedure` class fails with `IllegalAccessError`, including access to compiler-generated classes such as enum switch maps.
+- **Choice.** `ExportProcedure` only delegates to the public `SnapshotExport.run(...)`; the result record `Chunk` is a public top-level class.
+
+### D19. Streaming and chunks
+
+- **Choice.** The scope query is collected first (element IDs only, sorted). The procedure then returns a lazy stream: metadata, vocabulary (one pass over the elements), then one step per node and per relationship, each loaded by element ID in the same transaction. Text is handed out in chunks of about 16 KiB, always cut at a subject block boundary. Concatenating the chunks gives the document.
+- **Why.** Memory use is bounded by the ID sets, not by the size of the output. Element properties are read twice (vocabulary pass, then writing), which costs time but keeps memory flat.
+
+### D20. `lpg:database`
+
+- **Choice.** The name of the database the procedure runs in (`GraphDatabaseService.databaseName()`).
