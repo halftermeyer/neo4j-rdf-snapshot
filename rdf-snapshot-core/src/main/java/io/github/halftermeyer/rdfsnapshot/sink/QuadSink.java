@@ -11,7 +11,7 @@ import io.github.halftermeyer.rdfsnapshot.term.Term;
  *   <li>quads arrive grouped by graph, and a graph is never reopened once another one started;
  *       the default graph comes first;</li>
  *   <li>within a graph, quads arrive grouped by subject; the blank nodes describing a subject's
- *       objects (list cells, property specs, constraints) are emitted right after that subject,
+ *       objects (list cells) are emitted right after that subject,
  *       before the next IRI subject, and each is referenced exactly once.</li>
  * </ul>
  */
