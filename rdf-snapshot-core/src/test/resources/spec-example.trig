@@ -1,0 +1,64 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix geo:  <http://www.opengis.net/ont/geosparql#> .
+@prefix lpg:  <https://example.org/lpg#> .
+@prefix e:    <http://acme.org/plm/e/> .
+@prefix l:    <http://acme.org/plm/label/> .
+@prefix t:    <http://acme.org/plm/type/> .
+@prefix p:    <http://acme.org/plm/prop/> .
+@prefix s:    <http://acme.org/plm/snapshot/> .
+
+s:20261005T140311Z a lpg:Snapshot ;
+    lpg:database "plm" ;
+    lpg:scope "MATCH (p:Part {partNumber: 'P-001'})-[r:USES]->(m) RETURN p, r, m" ;
+    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
+
+s:20261005T140311Z {
+
+    l:Material a lpg:Label ;
+        lpg:name "Material" .
+
+    l:Part a lpg:Label ;
+        lpg:name "Part" .
+
+    l:Substance a lpg:Label ;
+        lpg:name "Substance" .
+
+    t:USES a lpg:RelationshipType ;
+        lpg:name "USES" .
+
+    p:casNumber a lpg:PropertyKey ;
+        lpg:name "casNumber" .
+
+    p:mass a lpg:PropertyKey ;
+        lpg:name "mass" .
+
+    p:partNumber a lpg:PropertyKey ;
+        lpg:name "partNumber" .
+
+    p:quantity a lpg:PropertyKey ;
+        lpg:name "quantity" .
+
+    p:tags a lpg:PropertyKey ;
+        lpg:name "tags" .
+
+    e:4:a1b2:12 a lpg:Node ;
+        lpg:label l:Part ;
+        lpg:elementId "4:a1b2:12" ;
+        p:mass 1.2E0 ;
+        p:partNumber "P-001" ;
+        p:tags ( "steel" "EU" "steel" ) .
+
+    e:4:a1b2:57 a lpg:Node ;
+        lpg:label l:Material, l:Substance ;
+        lpg:elementId "4:a1b2:57" ;
+        p:casNumber "335-67-1" .
+
+    e:5:a1b2:3 a lpg:Relationship ;
+        lpg:type t:USES ;
+        lpg:elementId "5:a1b2:3" ;
+        lpg:source e:4:a1b2:12 ;
+        lpg:target e:4:a1b2:57 ;
+        p:quantity 4 .
+}

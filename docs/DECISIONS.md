@@ -154,3 +154,16 @@ Entries marked **[spec]** propose a change to the spec.
   - **Blocker:** inside a `Mode.READ` procedure, `SHOW CONSTRAINTS` and `SHOW CURRENT GRAPH TYPE` fail ("not allowed ... overridden by READ"). The public schema API (`tx.schema().getConstraints()`) gives the constraint type, owner, keys and property types, but neither the implied/endpoint label nor the classification. The options were: the kernel's internal `ConstraintDescriptor` in the same transaction; `SHOW CONSTRAINTS` in a second transaction; or a non-READ procedure mode.
   - The public `PropertyType` enum has a `UUID` member, which SPEC §7.4 doesn't map.
 - **Spec change.** Mark §8 as optional for implementations, and say how a reader can get the GRAPH TYPE from a read-only context, or accept a schema read outside the snapshot transaction. Add `UUID` to §7.4 if Neo4j exposes it as a property type.
+
+## Conformance suite
+
+### D22. Comparing outputs with element IDs and timestamps
+
+- **Context.** Element IDs are chosen by the database and `prov:generatedAtTime` is the export instant, so neither can be written into `expected.trig`. Yet two runs must be byte-identical.
+- **Choice.** Before the isomorphism check, element IRIs become blank nodes, once each has been checked against its `lpg:elementId`. `lpg:elementId` literals and `prov:generatedAtTime` (after a datatype check) become constants. The check that two runs give identical bytes masks the `prov:generatedAtTime` literal only. The procedure has no option to fix the timestamp.
+- **Why.** These rules check everything that doesn't depend on the database instance, and need no test-only feature in the procedure. Element IRIs are compared up to renaming, which is exactly what SPEC §5 says they guarantee within one snapshot.
+
+### D23. Conformance case 1
+
+- **Context.** The prompt asks for the full SPEC §10 example with its GRAPH TYPE as case 1.
+- **Choice.** Not included, because GRAPH TYPE handling was dropped (D21). Case 02 has the same data and scope, so the data graph of §10 is still covered.

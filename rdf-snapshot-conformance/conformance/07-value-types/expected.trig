@@ -1,0 +1,78 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix lpg:  <https://example.org/lpg#> .
+@prefix e:    <http://acme.org/plm/e/> .
+@prefix l:    <http://acme.org/plm/label/> .
+@prefix t:    <http://acme.org/plm/type/> .
+@prefix p:    <http://acme.org/plm/prop/> .
+@prefix s:    <http://acme.org/plm/snapshot/> .
+@prefix geo:  <http://www.opengis.net/ont/geosparql#> .
+
+s:20261005T140311Z a lpg:Snapshot ;
+    lpg:database "conformance" ;
+    lpg:scope "MATCH (v:Values) RETURN v" ;
+    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
+
+# Not serialized: `embedding` (VECTOR) and `mixedDuration` (P1M-1D has no xsd:duration form).
+# Their keys are not declared either.
+s:20261005T140311Z {
+
+    l:Values         a lpg:Label ;       lpg:name "Values" .
+    p:bce            a lpg:PropertyKey ; lpg:name "bce" .
+    p:bool           a lpg:PropertyKey ; lpg:name "bool" .
+    p:bytes          a lpg:PropertyKey ; lpg:name "bytes" .
+    p:cartesian      a lpg:PropertyKey ; lpg:name "cartesian" .
+    p:cartesian3d    a lpg:PropertyKey ; lpg:name "cartesian3d" .
+    p:date           a lpg:PropertyKey ; lpg:name "date" .
+    p:dates          a lpg:PropertyKey ; lpg:name "dates" .
+    p:duration       a lpg:PropertyKey ; lpg:name "duration" .
+    p:float          a lpg:PropertyKey ; lpg:name "float" .
+    p:floats         a lpg:PropertyKey ; lpg:name "floats" .
+    p:inf            a lpg:PropertyKey ; lpg:name "inf" .
+    p:localDateTime  a lpg:PropertyKey ; lpg:name "localDateTime" .
+    p:localTime      a lpg:PropertyKey ; lpg:name "localTime" .
+    p:localTimeShort a lpg:PropertyKey ; lpg:name "localTimeShort" .
+    p:maxInt         a lpg:PropertyKey ; lpg:name "maxInt" .
+    p:nan            a lpg:PropertyKey ; lpg:name "nan" .
+    p:negDuration    a lpg:PropertyKey ; lpg:name "negDuration" .
+    p:negInt         a lpg:PropertyKey ; lpg:name "negInt" .
+    p:negZero        a lpg:PropertyKey ; lpg:name "negZero" .
+    p:string         a lpg:PropertyKey ; lpg:name "string" .
+    p:tiny           a lpg:PropertyKey ; lpg:name "tiny" .
+    p:utcDateTime    a lpg:PropertyKey ; lpg:name "utcDateTime" .
+    p:wgs            a lpg:PropertyKey ; lpg:name "wgs" .
+    p:wgs3d          a lpg:PropertyKey ; lpg:name "wgs3d" .
+    p:zonedDateTime  a lpg:PropertyKey ; lpg:name "zonedDateTime" .
+    p:zonedTime      a lpg:PropertyKey ; lpg:name "zonedTime" .
+
+    e:values a lpg:Node ;
+        lpg:label l:Values ;
+        lpg:elementId "values" ;
+        p:string "line1\nline2 \"quoted\" \\ tab\t é 🔩" ;
+        p:maxInt 9223372036854775807 ;
+        p:negInt -42 ;
+        p:float 1.0E-1 ;
+        p:tiny 1.5E-300 ;
+        p:nan "NaN"^^xsd:double ;
+        p:inf "INF"^^xsd:double ;
+        p:negZero -0.0E0 ;
+        p:bool true ;
+        p:date "2026-10-05"^^xsd:date ;
+        p:bce "-0044-03-15"^^xsd:date ;
+        p:localTime "23:59:59.999999999"^^xsd:time ;
+        p:localTimeShort "10:15:00"^^xsd:time ;
+        p:zonedTime "08:00:00-05:00"^^xsd:time ;
+        p:localDateTime "2026-10-05T14:03:11"^^xsd:dateTime ;
+        p:zonedDateTime "2026-10-05T14:03:11+02:00"^^xsd:dateTime ;
+        p:utcDateTime "2026-10-05T14:03:11Z"^^xsd:dateTime ;
+        p:duration "P1Y2M3DT4H5M6.5S"^^xsd:duration ;
+        p:negDuration "-PT0.5S"^^xsd:duration ;
+        p:wgs "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT(2.35 48.85)"^^geo:wktLiteral ;
+        p:wgs3d "<http://www.opengis.net/def/crs/OGC/0/CRS84h> POINT Z(2.35 48.85 35)"^^geo:wktLiteral ;
+        p:cartesian "POINT(1 -2.5)"^^geo:wktLiteral ;
+        p:cartesian3d "POINT Z(1 2 3)"^^geo:wktLiteral ;
+        p:bytes "AAEC/w=="^^xsd:base64Binary ;
+        p:dates ( "2026-01-01"^^xsd:date "2026-12-31"^^xsd:date ) ;
+        p:floats ( 1.0E0 2.5E0 ) .
+}

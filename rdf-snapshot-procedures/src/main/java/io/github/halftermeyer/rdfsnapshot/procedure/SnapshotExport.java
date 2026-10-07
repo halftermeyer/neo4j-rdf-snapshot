@@ -6,6 +6,7 @@ import io.github.halftermeyer.rdfsnapshot.Vocabulary;
 import io.github.halftermeyer.rdfsnapshot.model.SnapshotMetadata;
 import io.github.halftermeyer.rdfsnapshot.sink.NQuadsSink;
 import io.github.halftermeyer.rdfsnapshot.sink.QuadSink;
+import io.github.halftermeyer.rdfsnapshot.sink.TriGSink;
 import io.github.halftermeyer.rdfsnapshot.term.Iri;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -39,7 +40,7 @@ public final class SnapshotExport {
         StringBuilder buffer = new StringBuilder(CHUNK_SIZE * 2);
         QuadSink sink = switch (cfg.format()) {
             case NQUADS -> new NQuadsSink(buffer);
-            case TRIG -> throw new IllegalArgumentException("format 'trig' is not implemented yet");
+            case TRIG -> new TriGSink(buffer, iris);
         };
         SnapshotSerializer serializer = new SnapshotSerializer(iris, sink);
         SnapshotMetadata metadata = new SnapshotMetadata(cfg.snapshotId(), database, scopeQuery, now);

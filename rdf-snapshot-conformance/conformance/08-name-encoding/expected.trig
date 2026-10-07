@@ -1,0 +1,60 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix lpg:  <https://example.org/lpg#> .
+@prefix e:    <http://acme.org/plm/e/> .
+@prefix l:    <http://acme.org/plm/label/> .
+@prefix t:    <http://acme.org/plm/type/> .
+@prefix p:    <http://acme.org/plm/prop/> .
+@prefix s:    <http://acme.org/plm/snapshot/> .
+@prefix geo:  <http://www.opengis.net/ont/geosparql#> .
+
+s:20261005T140311Z a lpg:Snapshot ;
+    lpg:database "conformance" ;
+    lpg:scope "MATCH ()-[r]->() RETURN r" ;
+    prov:generatedAtTime "2026-10-05T14:03:11Z"^^xsd:dateTime .
+
+# Full IRIs on purpose, so the encoding is visible.
+s:20261005T140311Z {
+
+    <http://acme.org/plm/label/Pi%C3%A8ce%20d%C3%A9tach%C3%A9e> a lpg:Label ; lpg:name "Pièce détachée" .
+    <http://acme.org/plm/label/a%2Fb%23c>                      a lpg:Label ; lpg:name "a/b#c" .
+    <http://acme.org/plm/label/Name>                           a lpg:Label ; lpg:name "Name" .
+
+    <http://acme.org/plm/type/USES%20%2F%20CONTAINS> a lpg:RelationshipType ; lpg:name "USES / CONTAINS" .
+
+    <http://acme.org/plm/prop/part%20number>       a lpg:PropertyKey ; lpg:name "part number" .
+    <http://acme.org/plm/prop/masse%2Fkg>          a lpg:PropertyKey ; lpg:name "masse/kg" .
+    <http://acme.org/plm/prop/%E9%83%A8%E5%93%81>  a lpg:PropertyKey ; lpg:name "部品" .
+    <http://acme.org/plm/prop/Name>                a lpg:PropertyKey ; lpg:name "Name" .
+    <http://acme.org/plm/prop/ns:local>            a lpg:PropertyKey ; lpg:name "ns:local" .
+    <http://acme.org/plm/prop/100%25>              a lpg:PropertyKey ; lpg:name "100%" .
+    <http://acme.org/plm/prop/.hidden>             a lpg:PropertyKey ; lpg:name ".hidden" .
+    <http://acme.org/plm/prop/x~y>                 a lpg:PropertyKey ; lpg:name "x~y" .
+    <http://acme.org/plm/prop/q%23ty>              a lpg:PropertyKey ; lpg:name "q#ty" .
+
+    e:part a lpg:Node ;
+        lpg:label <http://acme.org/plm/label/Pi%C3%A8ce%20d%C3%A9tach%C3%A9e>,
+                  <http://acme.org/plm/label/a%2Fb%23c>,
+                  <http://acme.org/plm/label/Name> ;
+        lpg:elementId "part" ;
+        <http://acme.org/plm/prop/part%20number> "P-1" ;
+        <http://acme.org/plm/prop/masse%2Fkg> 1.5E0 ;
+        <http://acme.org/plm/prop/%E9%83%A8%E5%93%81> "x" ;
+        <http://acme.org/plm/prop/Name> "same name as a label" ;
+        <http://acme.org/plm/prop/ns:local> 1 ;
+        <http://acme.org/plm/prop/100%25> true ;
+        <http://acme.org/plm/prop/.hidden> "dot" ;
+        <http://acme.org/plm/prop/x~y> "tilde" .
+
+    e:other a lpg:Node ;
+        lpg:label <http://acme.org/plm/label/Name> ;
+        lpg:elementId "other" .
+
+    e:rel a lpg:Relationship ;
+        lpg:type <http://acme.org/plm/type/USES%20%2F%20CONTAINS> ;
+        lpg:elementId "rel" ;
+        lpg:source e:part ;
+        lpg:target e:other ;
+        <http://acme.org/plm/prop/q%23ty> 2 .
+}
