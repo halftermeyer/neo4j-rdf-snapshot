@@ -175,6 +175,21 @@ Entries marked **[spec]** propose a change to the spec.
 - **Why.** One code path for the procedure and for embedders; the module can be shaded into any plugin. Embedders should relocate the `io.github.halftermeyer.rdfsnapshot` packages when shading: with both plugins installed, two unrelocated copies of these classes would sit on the same server classpath (`plugins/*`, D18), and a version mismatch between them would surface as linkage errors.
 - **Distribution.** `jitpack.yml` builds with JDK 21 and `mvn install -DskipTests` (the conformance suite needs Docker). Coordinates: `com.github.halftermeyer.neo4j-rdf-snapshot:rdf-snapshot-neo4j:<tag>`, repository `https://jitpack.io`.
 
+## Interpretation
+
+### D26. The §9.1 artifacts on Jena (answers part of SPEC §12)
+
+- **Context.** SPEC §12 asks to test the §9.1 interpretation on Jena: rdfs7 with `rdf:type` as the super-property, and `owl:hasValue` support per OWL profile.
+- **Observed** (Jena 6.1, through n20s's profiles, on the §10 example; pinned by n20s `SnapshotInterpretationTest`):
+
+  | Interpretation | RDFS | OWL_MICRO | OWL_MINI | OWL |
+  | --- | --- | --- | --- | --- |
+  | `lpg:label rdfs:subPropertyOf rdf:type`: `?n a l:Part` holds and chains `rdfs:subClassOf` | yes | yes | yes | yes |
+  | `owl:hasValue` restriction on `lpg:label` `rdfs:subClassOf ex:Component` (bare, or through `ex:PartRecord owl:equivalentClass`) | no | yes | yes | yes |
+
+  Forward and backward chaining agree, and only the record with the label is classified. Derivation traces end on the asserted `lpg:label` triple of the record, whose `lpg:elementId` leads back to Neo4j. The §9.1 warning holds: with `ex:Component owl:equivalentClass [hasValue l:Part]`, every other `ex:Component` receives `lpg:label l:Part` under the three OWL profiles.
+- **Consequence.** Both §9.1 forms work on Jena; `hasValue` needs an OWL profile (OWL_MICRO is enough). Shipping the artifacts as files next to the spec remains open.
+
 ## Conformance suite
 
 ### D22. Comparing outputs with element IDs and timestamps
